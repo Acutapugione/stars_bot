@@ -37,12 +37,12 @@ def upsert_students_data(data: dict[str:int]) -> None:
                 ))
             
 
-@router.message(F.text.contains("Відвідуваність:"))
+@router.message(F.text.contains("Зірочки:"))
 @router.message(F.text.contains("Зірочки за заняття:"))
 async def attendance_handler(message: Message) -> None:
     try:
         text = message.text
-        students_stars = parse_students_starts(text, search_str="Відвідуваність:")
+        students_stars = parse_students_starts(text, search_str="Зірочки:")
         students_stars.update(parse_students_starts(text, search_str="Зірочки за заняття:"))
         print(f"{students_stars=}")
         upsert_students_data(students_stars)

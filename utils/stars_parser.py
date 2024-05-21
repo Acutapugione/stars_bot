@@ -1,4 +1,4 @@
-def parse_students_starts(data:str, search_str:str = "Відвідуваність:\n", star_char:str ='⭐️')->dict[str:int]:
+def parse_students_starts(data:str, search_str:str = "Зірочки:\n", star_char:str ='⭐️')->dict[str:int]:
     student_stars = {}
     section_index = data.find(search_str)
     
