@@ -1,3 +1,5 @@
+import os
+
 from aiogram import Router
 from utils.stars_parser import parse_students_starts, parse_minus_students_starts
 from aiogram import F
@@ -6,9 +8,12 @@ from aiogram.types import Message
 from db import Session, Student
 from sqlalchemy import select
 import logging
+from dotenv import load_dotenv
 import json
 
-
+load_dotenv()
+USER = os.getenv("USER_ID")
+ADMINS = [int(USER)]
 router = Router(name="stars_parsing_router")
 
 def get_students_data() -> dict[str:int]:
@@ -56,24 +61,30 @@ def upsert_students_minus_data(data: dict[str:int]) -> None:
 @router.message(F.text.contains("Зірочки:"))
 @router.message(F.text.contains("Зірочки за заняття:"))
 async def attendance_handler(message: Message) -> None:
-    try:
-        text = message.text
-        students_stars = parse_students_starts(text, search_str="Зірочки:")
-        students_stars.update(parse_students_starts(text, search_str="Зірочки за заняття:"))
-        print(f"{students_stars=}")
-        upsert_students_data(students_stars)
-        await message.answer(f"Дані ⭐ успішно оновлено!")
+    user_id = message.from_user.id
+    if user_id in ADMINS:
+        try:
+            text = message.text
+            students_stars = parse_students_starts(text, search_str="Зірочки:")
+            students_stars.update(parse_students_starts(text, search_str="Зірочки за заняття:"))
+            print(f"{students_stars=}")
+            upsert_students_data(students_stars)
+            await message.answer(f"Дані ⭐ успішно оновлено!")
 
-        students_stars_minus = parse_minus_students_starts(text, search_str="Зірочки:")
-        print(f"{students_stars_minus=}")
-        upsert_students_minus_data(students_stars_minus)
-        await message.answer(f"Дані ❌ успішно оновлено!")
+            students_stars_minus = parse_minus_students_starts(text, search_str="Зірочки:")
+            print(f"{students_stars_minus=}")
+            upsert_students_minus_data(students_stars_minus)
+            await message.answer(f"Дані ❌ успішно оновлено!")
 
 
 
-    except Exception as e:
-        logging.error(str(e))
-        await message.answer(f"Дані не було оновлено!")
+        except Exception as e:
+            logging.error(str(e))
+            await message.answer(f"Дані не було оновлено!")
+    else:
+        logging.error(f"Увага! Спроба взлому {message.from_user.full_name}")
+        await message.answer(f"Не читері (мінус зірочка)!")
+
 
 @router.message(Command("students_stars"))
 async def students_stars_handler(message: Message) -> None:
